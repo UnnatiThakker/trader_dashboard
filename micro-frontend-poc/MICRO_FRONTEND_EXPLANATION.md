@@ -60,6 +60,115 @@ Module federation allows one app to load code from another app at runtime.
 
 This means the host can dynamically import the remote widget without bundling it ahead of time, while still reusing common libraries across both apps.
 
+## Why the remote app uses preview in this repo
+
+In this repo, the remote widget is loaded from a built preview server because the Vite dev server does not always expose the federation entry file at the same URL that the host expects.
+
+- `npm run build` generates the actual federation artifact at `dist/assets/remoteEntry.js`.
+- `npm run preview` serves that file directly as a static asset.
+- In dev mode, the remote app can still return the SPA HTML page for unknown routes, causing requests for `remoteEntry.js` to fail.
+
+So the preview-based flow ensures the host can fetch a real JS entry file from the remote app, not a redirected HTML page.
+
+## UAT and production behavior
+
+In UAT and production, the remote app should be built and deployed as a static asset package, not served by the Vite development server.
+
+- The remote app build output (`dist/assets/remoteEntry.js` and related chunks) is published to a stable host or CDN.
+- The host app is built with the remote asset URL that points to that deployed remote bundle.
+- This is the same runtime federation pattern as the preview workaround, but with production-grade hosting.
+- The host and remote can be independently released, and the host loads the remote widget dynamically at runtime.
+
+### Example deployment pipeline configuration
+
+Use an environment variable in `host-app/vite.config.ts` so the remote URL is injected at build time.
+
+```ts
+import { defineConfig, loadEnv } from 'vite'
+import react from '@vitejs/plugin-react'
+import federation from '@originjs/vite-plugin-federation'
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const remoteEntryUrl =
+    env.VITE_REMOTE_ENTRY_URL ||
+    'http://localhost:4175/assets/remoteEntry.js'
+
+  return {
+    server: {
+      host: '0.0.0.0',
+      port: 4174,
+    },
+    plugins: [
+      react(),
+      federation({
+        remotes: {
+          remoteApp: remoteEntryUrl,
+        },
+        shared: {
+          react: { singleton: true, requiredVersion: '^19.2.7' },
+          'react-dom': { singleton: true, requiredVersion: '^19.2.7' },
+        },
+      }),
+    ],
+  }
+})
+```
+
+#### GitHub Actions example
+
+```yaml
+jobs:
+  build-host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install host dependencies
+        run: cd micro-frontend-poc/host-app && npm install
+      - name: Build host for UAT
+        run: |
+          cd micro-frontend-poc/host-app
+          VITE_REMOTE_ENTRY_URL="https://uat-static.example.com/remote-app/assets/remoteEntry.js" npm run build
+```
+
+For production, use the production remote URL instead:
+
+```yaml
+      - name: Build host for production
+        run: |
+          cd micro-frontend-poc/host-app
+          VITE_REMOTE_ENTRY_URL="https://cdn.example.com/remote-app/assets/remoteEntry.js" npm run build
+```
+
+#### Alternate .env files
+
+You can also define environment files for each stage:
+
+`.env.uat`
+```env
+VITE_REMOTE_ENTRY_URL=https://uat-static.example.com/remote-app/assets/remoteEntry.js
+```
+
+`.env.production`
+```env
+VITE_REMOTE_ENTRY_URL=https://cdn.example.com/remote-app/assets/remoteEntry.js
+```
+
+Then build with the appropriate mode:
+
+```bash
+cd micro-frontend-poc/host-app
+npm run build -- --mode uat
+```
+
+or
+
+```bash
+npm run build -- --mode production
+```
+
+This keeps the remote URL out of source control and lets the deployment pipeline choose the correct UAT or production remote asset location.
+
 ## Comparison: Monolith vs Micro-frontend
 
 ### Monolith approach

@@ -94,23 +94,26 @@ npm run dev
 
 ### Micro-frontend
 
-1. Start the remote app:
+1. Start the remote app preview server on port 4175:
 
 ```bash
 cd micro-frontend-poc/remote-app
 npm install
-npm run dev -- --host 127.0.0.1 --port 4175
+npm run build
+npm run preview -- --host 0.0.0.0 --port 4175
 ```
 
-2. Start the host app:
+2. Start the host app in a second terminal:
 
 ```bash
 cd micro-frontend-poc/host-app
 npm install
-npm run dev -- --host 127.0.0.1 --port 4174
+npm run dev -- --host 0.0.0.0 --port 4174
 ```
 
 3. Open the host app in the browser at `http://127.0.0.1:4174`
+
+The host will load the remote widget from `http://127.0.0.1:4175`.
 
 ## Documentation
 

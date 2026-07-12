@@ -4,8 +4,8 @@ This proof of concept demonstrates a host portal shell loading a remote banking/
 
 ## Architecture
 
-- `host-app` — portal shell running on `http://localhost:4173`
-- `remote-app` — widget served on `http://localhost:4174`
+- `host-app` — portal shell running on `http://localhost:4174`
+- `remote-app` — widget served on `http://localhost:4175`
 
 ## What it proves
 
@@ -29,7 +29,7 @@ npm run preview -- --host 0.0.0.0 --port 4175
 ```bash
 cd micro-frontend-poc/host-app
 npm install
-npm run dev
+npm run dev -- --host 0.0.0.0 --port 4174
 ```
 
 3. Open `http://localhost:4174`
