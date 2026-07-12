@@ -28,16 +28,16 @@ Key features:
 
 ## Project Structure
 
-- `trader-dashboard-poc/src/App.tsx` — dashboard shell and layout
-- `trader-dashboard-poc/src/components/LiveFxTicker.tsx` — isolated ticker widget
-- `trader-dashboard-poc/src/components/PortfolioValuationGrid.tsx` — interactive portfolio grid
-- `trader-dashboard-poc/src/components/ErrorBoundary.tsx` — custom error boundary
-- `trader-dashboard-poc/src/hooks/useThrottledData.ts` — throttled batching hook
+- `monolith-poc/src/App.tsx` — dashboard shell and layout
+- `monolith-poc/src/components/LiveFxTicker.tsx` — isolated ticker widget
+- `monolith-poc/src/components/PortfolioValuationGrid.tsx` — interactive portfolio grid
+- `monolith-poc/src/components/ErrorBoundary.tsx` — custom error boundary
+- `monolith-poc/src/hooks/useThrottledData.ts` — throttled batching hook
 
 ## Run locally
 
 ```bash
-cd trader-dashboard-poc
+cd monolith-poc
 npm install
 npm run dev
 ```
@@ -49,7 +49,7 @@ Then open the local Vite URL shown in the terminal.
 Build the project to verify type safety and bundle output:
 
 ```bash
-cd trader-dashboard-poc
+cd monolith-poc
 npm run build
 ```
 
