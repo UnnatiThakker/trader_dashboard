@@ -12,6 +12,7 @@ Key features:
   - **Live FX Ticker** with simulated real-time price updates
   - **Portfolio Valuation Grid** with editable position units and live valuation
 - Custom `ErrorBoundary` wrapper for widget isolation
+  - Implemented as a React class component because React error boundaries currently require class lifecycle methods (`getDerivedStateFromError`, `componentDidCatch`)
   - A runtime crash in the FX ticker only affects that widget
   - Portfolio grid remains functional when the ticker fails
 - High-frequency mock price stream at 50 updates/second

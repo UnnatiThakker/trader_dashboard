@@ -67,6 +67,22 @@ It lets you accept many rapid events while updating React state at a controlled 
 ---
 
 ## Question 3
+**Why is `ErrorBoundary` implemented as a class component?**
+
+### Answer
+React error boundaries must be class components because the supported API relies on class lifecycle methods.
+
+- The component uses `static getDerivedStateFromError()` to update state after an error.
+- It uses `componentDidCatch()` to log or handle the error side effects.
+- React does not provide a built-in hook equivalent for error boundaries in stable releases.
+
+### Why this matters
+- This allows the FX ticker widget to fail safely without breaking the entire app.
+- The class-based boundary catches render-time errors from its children and renders fallback UI instead.
+
+---
+
+## Question 4
 **Why use Vite and not webpack?**
 
 ### Answer
