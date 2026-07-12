@@ -4,37 +4,87 @@ A small React UI proof of concept for a portfolio-focused dashboard shell.
 
 ## Overview
 
-This POC demonstrates building isolated dashboard widgets using React 19, Vite, and Tailwind CSS.
+This repo contains two implementations of the same dashboard concept:
 
-Key features:
+- `monolith-poc` — a traditional monolithic React app.
+- `micro-frontend-poc` — a host shell that loads a remote FX ticker widget at runtime.
 
-- Single-page shell with two independent sections:
-  - **Live FX Ticker** with simulated real-time price updates
-  - **Portfolio Valuation Grid** with editable position units and live valuation
-- Custom `ErrorBoundary` wrapper for widget isolation
-  - Implemented as a React class component because React error boundaries currently require class lifecycle methods (`getDerivedStateFromError`, `componentDidCatch`)
-  - A runtime crash in the FX ticker only affects that widget
-  - Portfolio grid remains functional when the ticker fails
-- High-frequency mock price stream at 50 updates/second
-- Custom `useThrottledData` hook to batch updates and reduce render frequency to every 150ms
-- `React.memo` used for portfolio row components to minimize unnecessary re-renders
+Both implementations use React 19, Vite, TypeScript, and Tailwind CSS.
 
-## Tech Stack
+## What was implemented in the micro-frontend version
 
-- React 19
-- Vite
-- TypeScript
-- Tailwind CSS
+The micro-frontend version splits the app into two separate Vite apps:
 
-## Project Structure
+- `host-app` — renders the dashboard layout, host shell, and local portfolio valuation grid.
+- `remote-app` — exposes a remote FX ticker widget via Vite module federation.
 
-- `monolith-poc/src/App.tsx` — dashboard shell and layout
-- `monolith-poc/src/components/LiveFxTicker.tsx` — isolated ticker widget
-- `monolith-poc/src/components/PortfolioValuationGrid.tsx` — interactive portfolio grid
-- `monolith-poc/src/components/ErrorBoundary.tsx` — custom error boundary
-- `monolith-poc/src/hooks/useThrottledData.ts` — throttled batching hook
+Key capabilities:
+
+- Dynamic runtime loading of the remote widget with `import('remoteApp/RemoteWidget')`
+- Shared singleton dependencies for `react` and `react-dom`
+- Error isolation via a host `ErrorBoundary`
+- Local portfolio grid and remote ticker separation
+- Throttled live price updates from the remote widget using `useThrottledData`
+
+## Why this approach was chosen
+
+We chose a micro-frontend architecture to demonstrate how a dashboard can be decomposed into independently developed and deployed pieces.
+
+Advantages:
+
+- Independent deployment of host and remote apps
+- Better failure isolation for widget crashes
+- Runtime composition of remote widgets into the shell
+- Separate lifecycle for updating the ticker widget without redeploying the host
+- Shared dependencies to avoid duplicate React instances
+
+## Monolith vs Micro-frontend
+
+### Monolith approach
+
+- Single app bundle containing all components
+- Easier initial setup
+- Single build and deploy pipeline
+- Tighter coupling between widgets
+- A runtime failure in one widget may affect the entire page
+
+### Micro-frontend approach
+
+- Separate host and remote bundles
+- Remote widget loaded dynamically at runtime
+- Better isolation and independent releases
+- Additional configuration complexity around federation and proxying
+- More flexible architecture for teams owning separate widgets
+
+### Comparison
+
+| Approach | Pros | Cons |
+|---|---|---|
+| Monolith | Simple setup, single deployment, easier local dev | Coupling, larger bundles, shared failure surface |
+| Micro-frontend | Independent deployment, runtime isolation, team ownership | Federation configuration, proxy complexity, network load |
+
+## Project structure
+
+### `monolith-poc`
+
+- `src/App.tsx` — monolith shell and layout
+- `src/components/LiveFxTicker.tsx` — ticker widget
+- `src/components/PortfolioValuationGrid.tsx` — portfolio grid
+- `src/components/ErrorBoundary.tsx` — crash isolation
+- `src/hooks/useThrottledData.ts` — update batching
+
+### `micro-frontend-poc`
+
+- `host-app/src/App.tsx` — shell and remote loader
+- `host-app/src/components/PortfolioValuationGrid.tsx` — portfolio grid
+- `host-app/src/components/ErrorBoundary.tsx` — remote widget isolation
+- `remote-app/src/RemoteWidget.tsx` — remote widget entry
+- `remote-app/src/LiveFxTicker.tsx` — live pricing widget
+- `remote-app/src/useThrottledData.ts` — remote update batching
 
 ## Run locally
+
+### Monolith
 
 ```bash
 cd monolith-poc
@@ -42,20 +92,26 @@ npm install
 npm run dev
 ```
 
-Then open the local Vite URL shown in the terminal.
+### Micro-frontend
 
-## Validation
-
-Build the project to verify type safety and bundle output:
+1. Start the remote app:
 
 ```bash
-cd monolith-poc
-npm run build
+cd micro-frontend-poc/remote-app
+npm install
+npm run dev -- --host 127.0.0.1 --port 4175
 ```
 
-## Notes
+2. Start the host app:
 
-- The portfolio grid is editable and uses memoized rows so only edited rows re-render.
-- The FX ticker is isolated with an `ErrorBoundary`, so widget crashes do not break the full page.
-- The app uses a mock 50 Hz price feed, but UI updates are batched to every 150ms for smoother rendering.
-- Use the `Restart ticker` button in the fallback UI to recover the ticker widget after a simulated crash.
+```bash
+cd micro-frontend-poc/host-app
+npm install
+npm run dev -- --host 127.0.0.1 --port 4174
+```
+
+3. Open the host app in the browser at `http://127.0.0.1:4174`
+
+## Documentation
+
+- `micro-frontend-poc/MICRO_FRONTEND_EXPLANATION.md` — detailed implementation notes and architecture comparison.
